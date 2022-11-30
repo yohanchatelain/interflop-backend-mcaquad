@@ -70,14 +70,14 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "common/float_const.h"
-#include "common/float_struct.h"
-#include "common/float_utils.h"
-#include "common/fmaqApprox.h"
-#include "common/logger.h"
-#include "common/options.h"
-#include "common/rng/vfc_rng.h"
-#include "interflop.h"
+#include "interflop-stdlib/common/float_const.h"
+#include "interflop-stdlib/common/float_struct.h"
+#include "interflop-stdlib/common/float_utils.h"
+#include "interflop-stdlib/common/options.h"
+#include "interflop-stdlib/fma/fmaqApprox.h"
+#include "interflop-stdlib/interflop.h"
+#include "interflop-stdlib/iostream/logger.h"
+#include "interflop-stdlib/rng/vfc_rng.h"
 #include "interflop_mca.h"
 
 typedef enum {

@@ -13,7 +13,7 @@
 #ifndef __INTERFLOP_MCAQUAD_H__
 #define __INTERFLOP_MCAQUAD_H__
 
-#include "interflop_stdlib.h"
+#include "interflop-stdlib/interflop_stdlib.h"
 
 #define INTERFLOP_MCAQUAD_API(name) interflop_mcaquad_##name
 
