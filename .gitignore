@@ -53,3 +53,4 @@ dkms.conf
 
 .deps
 .libs
+.dirstamp
