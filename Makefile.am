@@ -6,4 +6,7 @@ libinterflop_mca_la_CFLAGS += -Wall -Wextra
 endif
 libinterflop_mca_la_LDFLAGS = -lm
 libinterflop_mca_la_LIBADD = @INTERFLOP_STDLIB_PATH@/lib/libinterflop_rng.la
+if BUILD_INTERFLOP_STDLIB
+libinterflop_bitmask_la_LIBADD += @INTERFLOP_STDLIB_PATH@/lib/libinterflop_stdlib.la
+endif
 library_includedir =$(includedir)/
