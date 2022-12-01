@@ -183,6 +183,7 @@ __thread rng_state_t rng_state;
 /* is comprised between: */
 /* 127+127 = 254 < DOUBLE_EXP_MAX (1023)  */
 /* -126-24+-126-24 = -300 > DOUBLE_EXP_MIN (-1022) */
+double _noise_binary64(const int exp, rng_state_t *rng_state);
 inline double _noise_binary64(const int exp, rng_state_t *rng_state) {
   const double d_rand = get_rand_double01(rng_state, &global_tid) - 0.5;
   binary64 b64 = {.f64 = d_rand};
@@ -273,12 +274,14 @@ __float128 _noise_binary128(const int exp, rng_state_t *rng_state) {
   }
 
 /* Adds the mca noise to da */
+extern void _mca_inexact_binary64(double *da, void *context);
 inline void _mca_inexact_binary64(double *da, void *context) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
   _INEXACT(da, ctx->binary32_precision, ctx, rng_state);
 }
 
 /* Adds the mca noise to qa */
+extern void _mca_inexact_binary128(__float128 *qa, void *context);
 inline void _mca_inexact_binary128(__float128 *qa, void *context) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
   _INEXACT(qa, ctx->binary64_precision, ctx, rng_state);
@@ -427,6 +430,8 @@ inline float _mca_binary32_unary_op(const float a, const mca_operations dop,
 
 /* Performs mca(a dop b) where a and b are binary32 values */
 /* Intermediate computations are performed with binary64 */
+float _mca_binary32_binary_op(const float a, const float b,
+                              const mca_operations dop, void *context);
 inline float _mca_binary32_binary_op(const float a, const float b,
                                      const mca_operations dop, void *context) {
   _MCA_BINARY_OP(a, b, dop, context, (double)0);
@@ -444,6 +449,8 @@ inline float _mca_binary32_ternary_op(const float a, const float b,
 
 /* Performs mca(qop a) where a is a binary64 value */
 /* Intermediate computations are performed with binary128 */
+double _mca_binary64_unary_op(const double a, const mca_operations qop,
+                              void *context);
 inline double _mca_binary64_unary_op(const double a, const mca_operations qop,
                                      void *context) {
   _MCA_UNARY_OP(a, qop, context, (__float128)0);
@@ -451,6 +458,8 @@ inline double _mca_binary64_unary_op(const double a, const mca_operations qop,
 
 /* Performs mca(a qop b) where a and b are binary64 values */
 /* Intermediate computations are performed with binary128 */
+double _mca_binary64_binary_op(const double a, const double b,
+                               const mca_operations qop, void *context);
 inline double _mca_binary64_binary_op(const double a, const double b,
                                       const mca_operations qop, void *context) {
   _MCA_BINARY_OP(a, b, qop, context, (__float128)0);
@@ -493,8 +502,8 @@ void INTERFLOP_MCAQUAD_API(div_float)(float a, float b, float *res,
   *res = _mca_binary32_binary_op(a, b, mca_div, context);
 }
 
-void INTERFLOP_MCAQUAD_API(madd_float)(float a, float b, float c, float *res,
-                                       void *context) {
+void INTERFLOP_MCAQUAD_API(fma_float)(float a, float b, float c, float *res,
+                                      void *context) {
   *res = _mca_binary32_ternary_op(a, b, c, mca_fma, context);
 }
 
@@ -518,8 +527,8 @@ void INTERFLOP_MCAQUAD_API(div_double)(double a, double b, double *res,
   *res = _mca_binary64_binary_op(a, b, mca_div, context);
 }
 
-void INTERFLOP_MCAQUAD_API(madd_double)(double a, double b, double c,
-                                        double *res, void *context) {
+void INTERFLOP_MCAQUAD_API(fma_double)(double a, double b, double c,
+                                       double *res, void *context) {
   *res = _mca_binary64_ternary_op(a, b, c, mca_fma, context);
 }
 
@@ -709,6 +718,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
 struct argp argp = {options, parse_opt, "", "", NULL, NULL, NULL};
 
 void init_context(mcaquad_context_t *ctx) {
+  ctx->mode = MCA_MODE_DEFAULT;
   ctx->binary32_precision = MCA_PRECISION_BINARY32_DEFAULT;
   ctx->binary64_precision = MCA_PRECISION_BINARY64_DEFAULT;
   ctx->relErr = true;
@@ -813,8 +823,8 @@ INTERFLOP_MCAQUAD_API(init)(void *context) {
     interflop_cmp_double : NULL,
     interflop_cast_double_to_float :
         INTERFLOP_MCAQUAD_API(cast_double_to_float),
-    interflop_madd_float : INTERFLOP_MCAQUAD_API(madd_float),
-    interflop_madd_double : INTERFLOP_MCAQUAD_API(madd_double),
+    interflop_fma_float : INTERFLOP_MCAQUAD_API(fma_float),
+    interflop_fma_double : INTERFLOP_MCAQUAD_API(fma_double),
     interflop_enter_function : NULL,
     interflop_exit_function : NULL,
     interflop_user_call : INTERFLOP_MCAQUAD_API(user_call),
