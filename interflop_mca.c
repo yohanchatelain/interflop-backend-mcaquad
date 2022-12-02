@@ -58,7 +58,6 @@
 
 #include <argp.h>
 #include <err.h>
-#include <errno.h>
 #include <math.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -175,7 +174,7 @@ pid_t global_tid = 0;
 
 /* helper data structure to centralize the data used for random number
  * generation */
-__thread rng_state_t rng_state;
+static __thread rng_state_t rng_state;
 
 /* noise = rand * 2^(exp) */
 /* We can skip special cases since we never meet them */
@@ -614,12 +613,13 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)state->input;
   char *endptr;
   int val = -1;
+  int error = 0;
   switch (key) {
   case KEY_PREC_B32:
     /* precision for binary32 */
-    errno = 0;
-    val = strtol(arg, &endptr, 10);
-    if (errno != 0 || val <= 0) {
+    error = 0;
+    val = interflop_strtol(arg, &endptr, &error);
+    if (error != 0 || val <= 0) {
       logger_error("--%s invalid value provided, must be a positive integer",
                    key_prec_b32_str);
     } else {
@@ -628,9 +628,9 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case KEY_PREC_B64:
     /* precision for binary64 */
-    errno = 0;
-    val = strtol(arg, &endptr, 10);
-    if (errno != 0 || val <= 0) {
+    error = 0;
+    val = interflop_strtol(arg, &endptr, &error);
+    if (error != 0 || val <= 0) {
       logger_error("--%s invalid value provided, must be a positive integer",
                    key_prec_b64_str);
     } else {
@@ -639,13 +639,13 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case KEY_MODE:
     /* mca mode */
-    if (strcasecmp(MCA_MODE_STR[mcamode_ieee], arg) == 0) {
+    if (interflop_strcasecmp(MCA_MODE_STR[mcamode_ieee], arg) == 0) {
       _set_mca_mode(mcamode_ieee, ctx);
-    } else if (strcasecmp(MCA_MODE_STR[mcamode_mca], arg) == 0) {
+    } else if (interflop_strcasecmp(MCA_MODE_STR[mcamode_mca], arg) == 0) {
       _set_mca_mode(mcamode_mca, ctx);
-    } else if (strcasecmp(MCA_MODE_STR[mcamode_pb], arg) == 0) {
+    } else if (interflop_strcasecmp(MCA_MODE_STR[mcamode_pb], arg) == 0) {
       _set_mca_mode(mcamode_pb, ctx);
-    } else if (strcasecmp(MCA_MODE_STR[mcamode_rr], arg) == 0) {
+    } else if (interflop_strcasecmp(MCA_MODE_STR[mcamode_rr], arg) == 0) {
       _set_mca_mode(mcamode_rr, ctx);
     } else {
       logger_error("--%s invalid value provided, must be one of: "
@@ -655,13 +655,15 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case KEY_ERR_MODE:
     /* mca error mode */
-    if (strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_rel], arg) == 0) {
+    if (interflop_strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_rel], arg) == 0) {
       ctx->relErr = true;
       ctx->absErr = false;
-    } else if (strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_abs], arg) == 0) {
+    } else if (interflop_strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_abs], arg) ==
+               0) {
       ctx->relErr = false;
       ctx->absErr = true;
-    } else if (strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_all], arg) == 0) {
+    } else if (interflop_strcasecmp(MCA_ERR_MODE_STR[mca_err_mode_all], arg) ==
+               0) {
       ctx->relErr = true;
       ctx->absErr = true;
     } else {
@@ -672,19 +674,19 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case KEY_ERR_EXP:
     /* exponent of the maximum absolute error */
-    errno = 0;
-    ctx->absErr_exp = strtol(arg, &endptr, 10);
-    if (errno != 0) {
+    error = 0;
+    ctx->absErr_exp = interflop_strtol(arg, &endptr, &error);
+    if (error != 0) {
       logger_error("--%s invalid value provided, must be an integer",
                    key_err_exp_str);
     }
     break;
   case KEY_SEED:
     /* seed */
-    errno = 0;
+    error = 0;
     ctx->choose_seed = true;
-    ctx->seed = strtoull(arg, &endptr, 10);
-    if (errno != 0) {
+    ctx->seed = interflop_strtol(arg, &endptr, &error);
+    if (error != 0) {
       logger_error("--%s invalid value provided, must be an integer",
                    key_seed_str);
     }
@@ -699,12 +701,12 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case KEY_SPARSITY:
     /* sparse perturbations */
-    errno = 0;
-    ctx->sparsity = strtof(arg, &endptr);
+    error = 0;
+    ctx->sparsity = interflop_strtod(arg, &endptr, &error);
     if (ctx->sparsity <= 0) {
-      errno = 1;
+      error = 1;
     }
-    if (errno != 0) {
+    if (error != 0) {
       logger_error("--%s invalid value provided, must be positive",
                    key_sparsity_str);
     }

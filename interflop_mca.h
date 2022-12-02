@@ -28,17 +28,19 @@ typedef enum {
 
 /* Interflop context */
 typedef struct {
+  /* helper data structure to centralize the data used for random number
+   * generation */
+  IUint64_t seed;
+  float sparsity;
+  int binary32_precision;
+  int binary64_precision;
+  int absErr_exp;
   IBool relErr;
   IBool absErr;
   IBool daz;
   IBool ftz;
   IBool choose_seed;
   mcamode mode;
-  int binary32_precision;
-  int binary64_precision;
-  int absErr_exp;
-  float sparsity;
-  IUint64_t seed;
 } mcaquad_context_t;
 
 #endif /* __INTERFLOP_MCAQUAD_H__ */
