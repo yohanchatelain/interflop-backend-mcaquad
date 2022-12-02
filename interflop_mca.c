@@ -777,17 +777,21 @@ void INTERFLOP_MCAQUAD_API(CLI)(int argc, char **argv, void *context) {
   }
 
 void _mcaquad_check_stdlib(void) {
-  CHECK_IMPL(malloc);
   CHECK_IMPL(exit);
   CHECK_IMPL(fopen);
   CHECK_IMPL(fprintf);
   CHECK_IMPL(getenv);
   CHECK_IMPL(gettid);
+  CHECK_IMPL(malloc);
   CHECK_IMPL(sprintf);
   CHECK_IMPL(strcasecmp);
   CHECK_IMPL(strerror);
+  CHECK_IMPL(strtod);
+  CHECK_IMPL(strtol);
   CHECK_IMPL(vfprintf);
   CHECK_IMPL(vwarnx);
+  /* vfc_rng */
+  CHECK_IMPL(gettimeofday);
 }
 
 void INTERFLOP_MCAQUAD_API(pre_init)(File *stream, interflop_panic_t panic,
