@@ -13,6 +13,7 @@
 #ifndef __INTERFLOP_MCAQUAD_H__
 #define __INTERFLOP_MCAQUAD_H__
 
+#include "interflop-stdlib/interflop.h"
 #include "interflop-stdlib/interflop_stdlib.h"
 
 #define INTERFLOP_MCAQUAD_API(name) interflop_mcaquad_##name
@@ -29,8 +30,8 @@
 #define MCAQUAD_SEED_DEFAULT 0ULL
 #define MCAQUAD_SPARSITY_DEFAULT 1.0f
 #define MCAQUAD_ABSOLUTE_ERROR_EXPONENT_DEFAULT 112 // Why 112?
-#define MCAQUAD_DAZ_DEFAULT False
-#define MCAQUAD_FTZ_DEFAULT False
+#define MCAQUAD_DAZ_DEFAULT IFalse
+#define MCAQUAD_FTZ_DEFAULT IFalse
 
 /* define the available MCA modes of operation */
 typedef enum {
@@ -75,5 +76,43 @@ typedef struct {
   IUint32_t daz;
   IUint32_t ftz;
 } mcaquad_conf_t;
+
+const char *INTERFLOP_MCAQUAD_API(get_backend_name)(void);
+const char *INTERFLOP_MCAQUAD_API(get_backend_version)(void);
+const char *get_mcaquad_mode_name(mcaquad_mode mode);
+
+void mcaquad_push_seed(IUint32_t);
+void mcaquad_pop_seed(void);
+
+void INTERFLOP_MCAQUAD_API(add_float)(float a, float b, float *res,
+                                      void *context);
+void INTERFLOP_MCAQUAD_API(sub_float)(float a, float b, float *res,
+                                      void *context);
+void INTERFLOP_MCAQUAD_API(mul_float)(float a, float b, float *res,
+                                      void *context);
+void INTERFLOP_MCAQUAD_API(div_float)(float a, float b, float *res,
+                                      void *context);
+void INTERFLOP_MCAQUAD_API(fma_float)(float a, float b, float c, float *res,
+                                      void *context);
+void INTERFLOP_MCAQUAD_API(add_double)(double a, double b, double *res,
+                                       void *context);
+void INTERFLOP_MCAQUAD_API(sub_double)(double a, double b, double *res,
+                                       void *context);
+void INTERFLOP_MCAQUAD_API(mul_double)(double a, double b, double *res,
+                                       void *context);
+void INTERFLOP_MCAQUAD_API(div_double)(double a, double b, double *res,
+                                       void *context);
+void INTERFLOP_MCAQUAD_API(fma_double)(double a, double b, double c,
+                                       double *res, void *context);
+void INTERFLOP_MCAQUAD_API(cast_double_to_float)(double a, float *res,
+                                                 void *context);
+
+void INTERFLOP_MCAQUAD_API(user_call)(void *context, interflop_call_id id,
+                                      va_list ap);
+void INTERFLOP_MCAQUAD_API(configure)(mcaquad_conf_t conf, void *context);
+void INTERFLOP_MCAQUAD_API(CLI)(int argc, char **argv, void *context);
+void INTERFLOP_MCAQUAD_API(pre_init)(File *stream, interflop_panic_t panic,
+                                     void **context);
+struct interflop_backend_interface_t INTERFLOP_MCAQUAD_API(init)(void *context);
 
 #endif /* __INTERFLOP_MCAQUAD_H__ */

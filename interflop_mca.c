@@ -79,6 +79,13 @@
 #include "interflop-stdlib/rng/vfc_rng.h"
 #include "interflop_mca.h"
 
+/* Disable thread safety for RNG required for Valgrind */
+#ifdef RNG_THREAD_SAFE
+#define TLS __thread
+#else
+#define TLS
+#endif
+
 typedef enum {
   KEY_PREC_B32,
   KEY_PREC_B64,
@@ -204,15 +211,11 @@ static void _set_mcaquad_seed(uint64_t seed, mcaquad_context_t *ctx) {
   ctx->seed = seed;
 }
 
-const char *_get_error_mode_str(mcaquad_context_t *ctx) {
-  if (ctx->relErr && ctx->absErr) {
-    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_all];
-  } else if (ctx->relErr && !ctx->absErr) {
-    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_rel];
-  } else if (!ctx->relErr && ctx->absErr) {
-    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_abs];
-  } else {
+const char *get_mcaquad_mode_name(mcaquad_mode mode) {
+  if (mode >= _mcaquad_mode_end_) {
     return NULL;
+  } else {
+    return MCAQUAD_MODE_STR[mode];
   }
 }
 
@@ -232,7 +235,32 @@ pid_t global_tid = 0;
 
 /* helper data structure to centralize the data used for random number
  * generation */
-static __thread rng_state_t rng_state;
+
+static TLS rng_state_t rng_state;
+/* copy */
+static TLS rng_state_t __rng_state;
+
+/* Function used by Verrou to save the */
+/* current rng state and replace it by the new seed */
+void mcaquad_push_seed(uint32_t seed) {
+  __rng_state = rng_state;
+  _init_rng_state_struct(&rng_state, true, seed, false);
+}
+
+/* Function used by Verrou to restore the copied rng state */
+void mcaquad_pop_seed() { rng_state = __rng_state; }
+
+static const char *_get_error_mode_str(mcaquad_context_t *ctx) {
+  if (ctx->relErr && ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_all];
+  } else if (ctx->relErr && !ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_rel];
+  } else if (!ctx->relErr && ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_abs];
+  } else {
+    return NULL;
+  }
+}
 
 /* noise = rand * 2^(exp) */
 /* We can skip special cases since we never meet them */
@@ -810,7 +838,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 struct argp argp = {options, parse_opt, "", "", NULL, NULL, NULL};
 
-void init_context(mcaquad_context_t *ctx) {
+static void init_context(mcaquad_context_t *ctx) {
   ctx->mode = MCAQUAD_MODE_DEFAULT;
   ctx->binary32_precision = MCAQUAD_PRECISION_BINARY32_DEFAULT;
   ctx->binary64_precision = MCAQUAD_PRECISION_BINARY64_DEFAULT;
@@ -824,7 +852,7 @@ void init_context(mcaquad_context_t *ctx) {
   ctx->sparsity = MCAQUAD_SPARSITY_DEFAULT;
 }
 
-void print_information_header(void *context) {
+static void print_information_header(void *context) {
   /* Environnement variable to disable loading message */
   char *silent_load_env = interflop_getenv("VFC_BACKENDS_SILENT_LOAD");
   bool silent_load = ((silent_load_env == NULL) ||

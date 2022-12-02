@@ -7,6 +7,9 @@ libinterflop_mca_la_CFLAGS = -DBACKEND_HEADER="interflop_mca" -I@INTERFLOP_STDLI
 if WALL_CFLAGS
 libinterflop_mca_la_CFLAGS += -Wall -Wextra
 endif
+if RNG_THREAD_SAFE
+libinterflop_mca_la_CFLAGS += -DRNG_THREAD_SAFE
+endif
 libinterflop_mca_la_LIBADD = \
     @INTERFLOP_STDLIB_PATH@/lib/libinterflop_rng.la \
     @INTERFLOP_STDLIB_PATH@/lib/libinterflop_fma.la
