@@ -28,8 +28,6 @@ typedef enum {
 
 /* Interflop context */
 typedef struct {
-  /* helper data structure to centralize the data used for random number
-   * generation */
   IUint64_t seed;
   float sparsity;
   int binary32_precision;
