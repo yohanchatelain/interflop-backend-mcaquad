@@ -17,14 +17,31 @@
 
 #define INTERFLOP_MCAQUAD_API(name) interflop_mcaquad_##name
 
+/* define default environment variables and default parameters */
+#define MCAQUAD_PRECISION_BINARY32_MIN 1
+#define MCAQUAD_PRECISION_BINARY64_MIN 1
+#define MCAQUAD_PRECISION_BINARY32_MAX DOUBLE_PMAN_SIZE
+#define MCAQUAD_PRECISION_BINARY64_MAX QUAD_PMAN_SIZE
+#define MCAQUAD_PRECISION_BINARY32_DEFAULT FLOAT_PREC
+#define MCAQUAD_PRECISION_BINARY64_DEFAULT DOUBLE_PREC
+#define MCAQUAD_MODE_DEFAULT mcaquad_mode_mca
+#define MCAQUAD_ERR_MODE_DEFAULT mcaquad_err_mode_rel
+
 /* define the available MCA modes of operation */
 typedef enum {
-  mcamode_ieee,
-  mcamode_mca,
-  mcamode_pb,
-  mcamode_rr,
-  _mcamode_end_
-} mcamode;
+  mcaquad_mode_ieee,
+  mcaquad_mode_mca,
+  mcaquad_mode_pb,
+  mcaquad_mode_rr,
+  _mcaquad_mode_end_
+} mcaquad_mode;
+
+/* define the available error modes */
+typedef enum {
+  mcaquad_err_mode_rel,
+  mcaquad_err_mode_abs,
+  mcaquad_err_mode_all
+} mcaquad_err_mode;
 
 /* Interflop context */
 typedef struct {
@@ -38,7 +55,19 @@ typedef struct {
   IBool daz;
   IBool ftz;
   IBool choose_seed;
-  mcamode mode;
+  mcaquad_mode mode;
 } mcaquad_context_t;
+
+typedef struct {
+  IUint64_t seed;
+  float sparsity;
+  IUint32_t precision_binary32;
+  IUint32_t precision_binary64;
+  mcaquad_mode mode;
+  mcaquad_err_mode err_mode;
+  IInt64_t max_abs_err_exponent;
+  IUint32_t daz;
+  IUint32_t ftz;
+} mcaquad_conf_t;
 
 #endif /* __INTERFLOP_MCAQUAD_H__ */
