@@ -26,6 +26,11 @@
 #define MCAQUAD_PRECISION_BINARY64_DEFAULT DOUBLE_PREC
 #define MCAQUAD_MODE_DEFAULT mcaquad_mode_mca
 #define MCAQUAD_ERR_MODE_DEFAULT mcaquad_err_mode_rel
+#define MCAQUAD_SEED_DEFAULT 0ULL
+#define MCAQUAD_SPARSITY_DEFAULT 1.0f
+#define MCAQUAD_ABSOLUTE_ERROR_EXPONENT_DEFAULT 112 // Why 112?
+#define MCAQUAD_DAZ_DEFAULT False
+#define MCAQUAD_FTZ_DEFAULT False
 
 /* define the available MCA modes of operation */
 typedef enum {

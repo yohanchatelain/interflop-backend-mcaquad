@@ -204,6 +204,18 @@ static void _set_mcaquad_seed(uint64_t seed, mcaquad_context_t *ctx) {
   ctx->seed = seed;
 }
 
+const char *_get_error_mode_str(mcaquad_context_t *ctx) {
+  if (ctx->relErr && ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_all];
+  } else if (ctx->relErr && !ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_rel];
+  } else if (!ctx->relErr && ctx->absErr) {
+    return MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_abs];
+  } else {
+    return NULL;
+  }
+}
+
 const char *INTERFLOP_MCAQUAD_API(get_backend_name)(void) { return "mcaquad"; }
 
 const char *INTERFLOP_MCAQUAD_API(get_backend_version)(void) {
@@ -687,9 +699,9 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
   char *endptr;
   int val = -1;
   int error = 0;
-  float sparsity = 0;
-  uint64_t seed = 0;
-  long exponent = 0;
+  float sparsity = MCAQUAD_SPARSITY_DEFAULT;
+  uint64_t seed = MCAQUAD_SEED_DEFAULT;
+  long exponent_error = MCAQUAD_ABSOLUTE_ERROR_EXPONENT_DEFAULT;
   switch (key) {
   case KEY_PREC_B32:
     /* precision for binary32 */
@@ -752,12 +764,12 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case KEY_ERR_EXP:
     /* exponent of the maximum absolute error */
     error = 0;
-    exponent = interflop_strtol(arg, &endptr, &error);
+    exponent_error = interflop_strtol(arg, &endptr, &error);
     if (error != 0) {
       logger_error("--%s invalid value provided, must be an integer",
                    key_err_exp_str);
     }
-    _set_mcaquad_max_abs_err_exp(exponent, ctx);
+    _set_mcaquad_max_abs_err_exp(exponent_error, ctx);
     break;
   case KEY_SEED:
     /* seed */
@@ -804,40 +816,36 @@ void init_context(mcaquad_context_t *ctx) {
   ctx->binary64_precision = MCAQUAD_PRECISION_BINARY64_DEFAULT;
   ctx->relErr = true;
   ctx->absErr = false;
-  ctx->absErr_exp = 112;
+  ctx->absErr_exp = MCAQUAD_ABSOLUTE_ERROR_EXPONENT_DEFAULT;
   ctx->choose_seed = false;
-  ctx->daz = false;
-  ctx->ftz = false;
-  ctx->seed = 0ULL;
-  ctx->sparsity = 1.0f;
+  ctx->daz = MCAQUAD_DAZ_DEFAULT;
+  ctx->ftz = MCAQUAD_FTZ_DEFAULT;
+  ctx->seed = MCAQUAD_SEED_DEFAULT;
+  ctx->sparsity = MCAQUAD_SPARSITY_DEFAULT;
 }
 
 void print_information_header(void *context) {
-  mcaquad_context_t *ctx = (mcaquad_context_t *)context;
+  /* Environnement variable to disable loading message */
+  char *silent_load_env = interflop_getenv("VFC_BACKENDS_SILENT_LOAD");
+  bool silent_load = ((silent_load_env == NULL) ||
+                      (interflop_strcasecmp(silent_load_env, "True") != 0))
+                         ? false
+                         : true;
 
-  logger_info("load backend with "
-              "%s = %d, "
-              "%s = %d, "
-              "%s = %s, "
-              "%s = %s, "
-              "%s = %d, "
-              "%s = %s, "
-              "%s = %s and "
-              "%s = %f"
-              "\n",
-              key_prec_b32_str, ctx->binary32_precision, key_prec_b64_str,
-              ctx->binary64_precision, key_mode_str,
-              MCAQUAD_MODE_STR[ctx->mode], key_err_mode_str,
-              (ctx->relErr && !ctx->absErr)
-                  ? MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_rel]
-              : (!ctx->relErr && ctx->absErr)
-                  ? MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_abs]
-              : (ctx->relErr && ctx->absErr)
-                  ? MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_all]
-                  : MCAQUAD_ERR_MODE_STR[mcaquad_err_mode_rel],
-              key_err_exp_str, (ctx->absErr_exp), key_daz_str,
-              ctx->daz ? "true" : "false", key_ftz_str,
-              ctx->ftz ? "true" : "false", key_sparsity_str, ctx->sparsity);
+  if (silent_load)
+    return;
+
+  mcaquad_context_t *ctx = (mcaquad_context_t *)context;
+  logger_info("load backend with ");
+  logger_info("%s = %d, ", key_prec_b32_str, ctx->binary32_precision);
+  logger_info("%s = %d, ", key_prec_b64_str, ctx->binary64_precision);
+  logger_info("%s = %s, ", key_mode_str, MCAQUAD_MODE_STR[ctx->mode]);
+  logger_info("%s = %s, ", key_err_mode_str, _get_error_mode_str(ctx));
+  logger_info("%s = %d, ", key_err_exp_str, ctx->absErr_exp);
+  logger_info("%s = %s, ", key_daz_str, ctx->daz ? "true" : "false");
+  logger_info("%s = %s and ", key_ftz_str, ctx->ftz ? "true" : "false");
+  logger_info("%s = %f", key_sparsity_str, ctx->sparsity);
+  logger_info("\n");
 }
 
 void INTERFLOP_MCAQUAD_API(CLI)(int argc, char **argv, void *context) {
