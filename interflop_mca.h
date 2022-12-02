@@ -40,7 +40,8 @@ typedef enum {
 typedef enum {
   mcaquad_err_mode_rel,
   mcaquad_err_mode_abs,
-  mcaquad_err_mode_all
+  mcaquad_err_mode_all,
+  _mcaquad_err_mode_end_
 } mcaquad_err_mode;
 
 /* Interflop context */

@@ -110,15 +110,6 @@ static const char *MCAQUAD_ERR_MODE_STR[] = {[mcaquad_err_mode_rel] = "rel",
                                              [mcaquad_err_mode_abs] = "abs",
                                              [mcaquad_err_mode_all] = "all"};
 
-/* define default environment variables and default parameters */
-#define MCAQUAD_PRECISION_BINARY32_MIN 1
-#define MCAQUAD_PRECISION_BINARY64_MIN 1
-#define MCAQUAD_PRECISION_BINARY32_MAX DOUBLE_PMAN_SIZE
-#define MCAQUAD_PRECISION_BINARY64_MAX QUAD_PMAN_SIZE
-#define MCAQUAD_PRECISION_BINARY32_DEFAULT FLOAT_PREC
-#define MCAQUAD_PRECISION_BINARY64_DEFAULT DOUBLE_PREC
-#define MCAQUAD_MODE_DEFAULT mcaquad_mode_mca
-
 /* possible operations values */
 typedef enum {
   mcaquad_add = '+',
@@ -127,7 +118,7 @@ typedef enum {
   mcaquad_div = '/',
   mcaquad_fma = 'f',
   mcaquad_cast = 'c',
-  __mca_operations_end__
+  __mcaquad_operations_end__
 } mca_operations;
 
 /******************** MCA CONTROL FUNCTIONS *******************
@@ -136,7 +127,7 @@ typedef enum {
  ***************************************************************/
 
 /* Set the mca mode */
-static void _set_mca_mode(const mcaquad_mode mode, mcaquad_context_t *ctx) {
+static void _set_mcaquad_mode(const mcaquad_mode mode, mcaquad_context_t *ctx) {
   if (mode >= _mcaquad_mode_end_) {
     logger_error("--%s invalid value provided, must be one of: "
                  "{ieee, mca, pb, rr}.",
@@ -146,19 +137,19 @@ static void _set_mca_mode(const mcaquad_mode mode, mcaquad_context_t *ctx) {
 }
 
 /* Set the virtual precision for binary32 */
-static void _set_mca_precision_binary32(const int precision,
-                                        mcaquad_context_t *ctx) {
-  _set_precision(MCA, precision, ctx->binary32_precision, (float)0);
+static void _set_mcaquad_precision_binary32(const int precision,
+                                            mcaquad_context_t *ctx) {
+  _set_precision(MCAQUAD, precision, ctx->binary32_precision, (float)0);
 }
 
 /* Set the virtual precision for binary64 */
-static void _set_mca_precision_binary64(const int precision,
-                                        mcaquad_context_t *ctx) {
-  _set_precision(MCA, precision, ctx->binary64_precision, (double)0);
+static void _set_mcaquad_precision_binary64(const int precision,
+                                            mcaquad_context_t *ctx) {
+  _set_precision(MCAQUAD, precision, ctx->binary64_precision, (double)0);
 }
 
 /* Set the error mode */
-static void _set_mcaquad_error_mode(vprec_err_mode mode,
+static void _set_mcaquad_error_mode(mcaquad_err_mode mode,
                                     mcaquad_context_t *ctx) {
   if (mode >= _mcaquad_err_mode_end_) {
     logger_error("invalid error mode provided, must be one of: "
@@ -328,15 +319,15 @@ __float128 _noise_binary128(const int exp, rng_state_t *rng_state) {
   }
 
 /* Adds the mca noise to da */
-extern void _mca_inexact_binary64(double *da, void *context);
-inline void _mca_inexact_binary64(double *da, void *context) {
+extern void _mcaquad_inexact_binary64(double *da, void *context);
+inline void _mcaquad_inexact_binary64(double *da, void *context) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
   _INEXACT(da, ctx->binary32_precision, ctx, rng_state);
 }
 
 /* Adds the mca noise to qa */
-extern void _mca_inexact_binary128(__float128 *qa, void *context);
-inline void _mca_inexact_binary128(__float128 *qa, void *context) {
+extern void _mcaquad_inexact_binary128(__float128 *qa, void *context);
+inline void _mcaquad_inexact_binary128(__float128 *qa, void *context) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
   _INEXACT(qa, ctx->binary64_precision, ctx, rng_state);
 }
@@ -345,8 +336,8 @@ inline void _mca_inexact_binary128(__float128 *qa, void *context) {
 /* The function is choosen depending on the type of X  */
 #define _INEXACT_BINARYN(X, A, CTX)                                            \
   _Generic(X, double                                                           \
-           : _mca_inexact_binary64, __float128                                 \
-           : _mca_inexact_binary128)(A, CTX)
+           : _mcaquad_inexact_binary64, __float128                             \
+           : _mcaquad_inexact_binary128)(A, CTX)
 
 /******************** MCA ARITHMETIC FUNCTIONS ********************
  * The following set of functions perform the MCA operation. Operands
@@ -379,7 +370,7 @@ inline void _mca_inexact_binary128(__float128 *qa, void *context) {
   case mcaquad_sub:                                                            \
     RES = (A) - (B);                                                           \
     break;                                                                     \
-  case mca_div:                                                                \
+  case mcaquad_div:                                                            \
     RES = (A) / (B);                                                           \
     break;                                                                     \
   default:                                                                     \
@@ -483,56 +474,62 @@ inline void _mca_inexact_binary128(__float128 *qa, void *context) {
 
 /* Performs mca(dop a) where a is a binary32 value */
 /* Intermediate computations are performed with binary64 */
-inline float _mca_binary32_unary_op(const float a, const mca_operations dop,
-                                    void *context) {
+inline float _mcaquad_binary32_unary_op(const float a, const mca_operations dop,
+                                        void *context) {
   _MCAQUAD_UNARY_OP(a, dop, context, (double)0);
 }
 
 /* Performs mca(a dop b) where a and b are binary32 values */
 /* Intermediate computations are performed with binary64 */
-float _mca_binary32_binary_op(const float a, const float b,
-                              const mca_operations dop, void *context);
-inline float _mca_binary32_binary_op(const float a, const float b,
-                                     const mca_operations dop, void *context) {
+float _mcaquad_binary32_binary_op(const float a, const float b,
+                                  const mca_operations dop, void *context);
+inline float _mcaquad_binary32_binary_op(const float a, const float b,
+                                         const mca_operations dop,
+                                         void *context) {
   _MCAQUAD_BINARY_OP(a, b, dop, context, (double)0);
 }
 
 /* Performs mca(a dop b dop c) where a, b and c are binary32 values */
 /* Intermediate computations are performed with binary64 */
-float _mca_binary32_ternary_op(const float a, const float b, const float c,
-                               const mca_operations dop, void *context);
-inline float _mca_binary32_ternary_op(const float a, const float b,
-                                      const float c, const mca_operations dop,
-                                      void *context) {
+float _mcaquad_binary32_ternary_op(const float a, const float b, const float c,
+                                   const mca_operations dop, void *context);
+inline float _mcaquad_binary32_ternary_op(const float a, const float b,
+                                          const float c,
+                                          const mca_operations dop,
+                                          void *context) {
   _MCAQUAD_TERNARY_OP(a, b, c, dop, context, (double)0);
 }
 
 /* Performs mca(qop a) where a is a binary64 value */
 /* Intermediate computations are performed with binary128 */
-double _mca_binary64_unary_op(const double a, const mca_operations qop,
-                              void *context);
-inline double _mca_binary64_unary_op(const double a, const mca_operations qop,
-                                     void *context) {
+double _mcaquad_binary64_unary_op(const double a, const mca_operations qop,
+                                  void *context);
+inline double _mcaquad_binary64_unary_op(const double a,
+                                         const mca_operations qop,
+                                         void *context) {
   _MCAQUAD_UNARY_OP(a, qop, context, (__float128)0);
 }
 
 /* Performs mca(a qop b) where a and b are binary64 values */
 /* Intermediate computations are performed with binary128 */
-double _mca_binary64_binary_op(const double a, const double b,
-                               const mca_operations qop, void *context);
-inline double _mca_binary64_binary_op(const double a, const double b,
-                                      const mca_operations qop, void *context) {
+double _mcaquad_binary64_binary_op(const double a, const double b,
+                                   const mca_operations qop, void *context);
+inline double _mcaquad_binary64_binary_op(const double a, const double b,
+                                          const mca_operations qop,
+                                          void *context) {
   _MCAQUAD_BINARY_OP(a, b, qop, context, (__float128)0);
 }
 
 /* Performs mca(a qop b qop c) where a, b and c are binary64 values */
 /* Intermediate computations are performed with binary128 */
-double _mca_binary64_ternary_op(const double a, const double b, const double c,
-                                const mca_operations qop, void *context);
+double _mcaquad_binary64_ternary_op(const double a, const double b,
+                                    const double c, const mca_operations qop,
+                                    void *context);
 
-inline double _mca_binary64_ternary_op(const double a, const double b,
-                                       const double c, const mca_operations qop,
-                                       void *context) {
+inline double _mcaquad_binary64_ternary_op(const double a, const double b,
+                                           const double c,
+                                           const mca_operations qop,
+                                           void *context) {
   _MCAQUAD_TERNARY_OP(a, b, c, qop, context, (__float128)0);
 }
 
@@ -544,57 +541,57 @@ inline double _mca_binary64_ternary_op(const double a, const double b,
 
 void INTERFLOP_MCAQUAD_API(add_float)(float a, float b, float *res,
                                       void *context) {
-  *res = _mca_binary32_binary_op(a, b, mcaquad_add, context);
+  *res = _mcaquad_binary32_binary_op(a, b, mcaquad_add, context);
 }
 
 void INTERFLOP_MCAQUAD_API(sub_float)(float a, float b, float *res,
                                       void *context) {
-  *res = _mca_binary32_binary_op(a, b, mcaquad_sub, context);
+  *res = _mcaquad_binary32_binary_op(a, b, mcaquad_sub, context);
 }
 
 void INTERFLOP_MCAQUAD_API(mul_float)(float a, float b, float *res,
                                       void *context) {
-  *res = _mca_binary32_binary_op(a, b, mcaquad_mul, context);
+  *res = _mcaquad_binary32_binary_op(a, b, mcaquad_mul, context);
 }
 
 void INTERFLOP_MCAQUAD_API(div_float)(float a, float b, float *res,
                                       void *context) {
-  *res = _mca_binary32_binary_op(a, b, mcaquad_div, context);
+  *res = _mcaquad_binary32_binary_op(a, b, mcaquad_div, context);
 }
 
 void INTERFLOP_MCAQUAD_API(fma_float)(float a, float b, float c, float *res,
                                       void *context) {
-  *res = _mca_binary32_ternary_op(a, b, c, mcaquad_fma, context);
+  *res = _mcaquad_binary32_ternary_op(a, b, c, mcaquad_fma, context);
 }
 
 void INTERFLOP_MCAQUAD_API(add_double)(double a, double b, double *res,
                                        void *context) {
-  *res = _mca_binary64_binary_op(a, b, mcaquad_add, context);
+  *res = _mcaquad_binary64_binary_op(a, b, mcaquad_add, context);
 }
 
 void INTERFLOP_MCAQUAD_API(sub_double)(double a, double b, double *res,
                                        void *context) {
-  *res = _mca_binary64_binary_op(a, b, mcaquad_sub, context);
+  *res = _mcaquad_binary64_binary_op(a, b, mcaquad_sub, context);
 }
 
 void INTERFLOP_MCAQUAD_API(mul_double)(double a, double b, double *res,
                                        void *context) {
-  *res = _mca_binary64_binary_op(a, b, mcaquad_mul, context);
+  *res = _mcaquad_binary64_binary_op(a, b, mcaquad_mul, context);
 }
 
 void INTERFLOP_MCAQUAD_API(div_double)(double a, double b, double *res,
                                        void *context) {
-  *res = _mca_binary64_binary_op(a, b, mcaquad_div, context);
+  *res = _mcaquad_binary64_binary_op(a, b, mcaquad_div, context);
 }
 
 void INTERFLOP_MCAQUAD_API(fma_double)(double a, double b, double c,
                                        double *res, void *context) {
-  *res = _mca_binary64_ternary_op(a, b, c, mcaquad_fma, context);
+  *res = _mcaquad_binary64_ternary_op(a, b, c, mcaquad_fma, context);
 }
 
 void INTERFLOP_MCAQUAD_API(cast_double_to_float)(double a, float *res,
                                                  void *context) {
-  *res = _mca_binary64_unary_op(a, mcaquad_cast, context);
+  *res = _mcaquad_binary64_unary_op(a, mcaquad_cast, context);
 }
 
 void _interflop_usercall_inexact(void *context, va_list ap) {
@@ -639,10 +636,10 @@ void INTERFLOP_MCAQUAD_API(user_call)(void *context, interflop_call_id id,
     _interflop_usercall_inexact(context, ap);
     break;
   case INTERFLOP_SET_PRECISION_BINARY32:
-    _set_mca_precision_binary32(va_arg(ap, int), context);
+    _set_mcaquad_precision_binary32(va_arg(ap, int), context);
     break;
   case INTERFLOP_SET_PRECISION_BINARY64:
-    _set_mca_precision_binary64(va_arg(ap, int), context);
+    _set_mcaquad_precision_binary64(va_arg(ap, int), context);
     break;
   default:
     logger_warning("Unknown interflop_call id (=%d)", id);
@@ -674,9 +671,9 @@ void INTERFLOP_MCAQUAD_API(configure)(mcaquad_conf_t conf, void *context) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
   _set_mcaquad_seed(conf.seed, ctx);
   _set_mcaquad_sparsity(conf.sparsity, ctx);
-  _set_mca_precision_binary32(conf.precision_binary32, ctx);
-  _set_mca_precision_binary64(conf.precision_binary64, ctx);
-  _set_mca_mode(conf.mode, ctx);
+  _set_mcaquad_precision_binary32(conf.precision_binary32, ctx);
+  _set_mcaquad_precision_binary64(conf.precision_binary64, ctx);
+  _set_mcaquad_mode(conf.mode, ctx);
   _set_mcaquad_error_mode(conf.err_mode, ctx);
   if (conf.max_abs_err_exponent != (unsigned int)(-1)) {
     _set_mcaquad_max_abs_err_exp(conf.max_abs_err_exponent, ctx);
@@ -702,7 +699,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
       logger_error("--%s invalid value provided, must be a positive integer",
                    key_prec_b32_str);
     } else {
-      _set_mca_precision_binary32(val, ctx);
+      _set_mcaquad_precision_binary32(val, ctx);
     }
     break;
   case KEY_PREC_B64:
@@ -713,22 +710,22 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
       logger_error("--%s invalid value provided, must be a positive integer",
                    key_prec_b64_str);
     } else {
-      _set_mca_precision_binary64(val, ctx);
+      _set_mcaquad_precision_binary64(val, ctx);
     }
     break;
   case KEY_MODE:
     /* mca mode */
     if (interflop_strcasecmp(MCAQUAD_MODE_STR[mcaquad_mode_ieee], arg) == 0) {
-      _set_mca_mode(mcaquad_mode_ieee, ctx);
+      _set_mcaquad_mode(mcaquad_mode_ieee, ctx);
     } else if (interflop_strcasecmp(MCAQUAD_MODE_STR[mcaquad_mode_mca], arg) ==
                0) {
-      _set_mca_mode(mcaquad_mode_mca, ctx);
+      _set_mcaquad_mode(mcaquad_mode_mca, ctx);
     } else if (interflop_strcasecmp(MCAQUAD_MODE_STR[mcaquad_mode_pb], arg) ==
                0) {
-      _set_mca_mode(mcaquad_mode_pb, ctx);
+      _set_mcaquad_mode(mcaquad_mode_pb, ctx);
     } else if (interflop_strcasecmp(MCAQUAD_MODE_STR[mcaquad_mode_rr], arg) ==
                0) {
-      _set_mca_mode(mcaquad_mode_rr, ctx);
+      _set_mcaquad_mode(mcaquad_mode_rr, ctx);
     } else {
       logger_error("--%s invalid value provided, must be one of: "
                    "{ieee, mca, pb, rr}.",
