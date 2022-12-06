@@ -722,7 +722,7 @@ void INTERFLOP_MCAQUAD_API(configure)(mcaquad_conf_t conf, void *context) {
   _set_mcaquad_ftz(conf.ftz, ctx);
 }
 
-error_t parse_opt(int key, char *arg, struct argp_state *state) {
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   mcaquad_context_t *ctx = (mcaquad_context_t *)state->input;
   char *endptr;
   int val = -1;
@@ -831,7 +831,7 @@ error_t parse_opt(int key, char *arg, struct argp_state *state) {
     _set_mcaquad_sparsity(sparsity, ctx);
     break;
   default:
-          return ARGP_ERR_UNKNOWN;
+    return ARGP_ERR_UNKNOWN;
   }
   return 0;
 }
