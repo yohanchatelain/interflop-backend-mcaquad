@@ -836,7 +836,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
-struct argp argp = {options, parse_opt, "", "", NULL, NULL, NULL};
+static struct argp argp = {options, parse_opt, "", "", NULL, NULL, NULL};
 
 static void init_context(mcaquad_context_t *ctx) {
   ctx->mode = MCAQUAD_MODE_DEFAULT;
