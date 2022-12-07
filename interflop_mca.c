@@ -864,16 +864,15 @@ static void print_information_header(void *context) {
     return;
 
   mcaquad_context_t *ctx = (mcaquad_context_t *)context;
-  logger_info("load backend with ");
-  logger_info("%s = %d, ", key_prec_b32_str, ctx->binary32_precision);
-  logger_info("%s = %d, ", key_prec_b64_str, ctx->binary64_precision);
-  logger_info("%s = %s, ", key_mode_str, MCAQUAD_MODE_STR[ctx->mode]);
-  logger_info("%s = %s, ", key_err_mode_str, _get_error_mode_str(ctx));
-  logger_info("%s = %d, ", key_err_exp_str, ctx->absErr_exp);
-  logger_info("%s = %s, ", key_daz_str, ctx->daz ? "true" : "false");
-  logger_info("%s = %s and ", key_ftz_str, ctx->ftz ? "true" : "false");
-  logger_info("%s = %f", key_sparsity_str, ctx->sparsity);
-  logger_info("\n");
+  logger_info("load backend with:\n");
+  logger_info("%s = %d\n", key_prec_b32_str, ctx->binary32_precision);
+  logger_info("%s = %d\n", key_prec_b64_str, ctx->binary64_precision);
+  logger_info("%s = %s\n", key_mode_str, MCAQUAD_MODE_STR[ctx->mode]);
+  logger_info("%s = %s\n", key_err_mode_str, _get_error_mode_str(ctx));
+  logger_info("%s = %d\n", key_err_exp_str, ctx->absErr_exp);
+  logger_info("%s = %s\n", key_daz_str, ctx->daz ? "true" : "false");
+  logger_info("%s = %s\n", key_ftz_str, ctx->ftz ? "true" : "false");
+  logger_info("%s = %f\n", key_sparsity_str, ctx->sparsity);
 }
 
 void INTERFLOP_MCAQUAD_API(CLI)(int argc, char **argv, void *context) {
