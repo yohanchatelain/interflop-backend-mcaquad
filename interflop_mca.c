@@ -73,7 +73,7 @@
 #include "interflop-stdlib/common/float_struct.h"
 #include "interflop-stdlib/common/float_utils.h"
 #include "interflop-stdlib/common/options.h"
-#include "interflop-stdlib/fma/fmaqApprox.h"
+#include "interflop-stdlib/fma/interflop_fma.h"
 #include "interflop-stdlib/interflop.h"
 #include "interflop-stdlib/iostream/logger.h"
 #include "interflop-stdlib/rng/vfc_rng.h"
@@ -386,6 +386,12 @@ inline void _mcaquad_inexact_binary128(__float128 *qa, void *context) {
  * result converted to the original format for return
  *******************************************************************/
 
+#define PERFORM_FMA(A, B, C)                                                   \
+  _Generic(A, float                                                            \
+           : interflop_fma_binary32, double                                    \
+           : interflop_fma_binary64, __float128                                \
+           : interflop_fma_binary128)(A, B, C)
+
 /* perform_ternary_op: applies the ternary operator (op) to (a), (b) and (c) */
 /* and stores the result in (res) */
 #define PERFORM_UNARY_OP(op, res, a)                                           \
@@ -422,7 +428,7 @@ inline void _mcaquad_inexact_binary128(__float128 *qa, void *context) {
 #define PERFORM_TERNARY_OP(op, res, a, b, c)                                   \
   switch (op) {                                                                \
   case mcaquad_fma:                                                            \
-    res = fmaApprox((a), (b), (c));                                            \
+    res = PERFORM_FMA(a, b, c);                                                \
     break;                                                                     \
   default:                                                                     \
     logger_error("invalid operator %c", op);                                   \
@@ -873,6 +879,9 @@ static void print_information_header(void *context) {
   logger_info("%s = %s\n", key_daz_str, ctx->daz ? "true" : "false");
   logger_info("%s = %s\n", key_ftz_str, ctx->ftz ? "true" : "false");
   logger_info("%s = %f\n", key_sparsity_str, ctx->sparsity);
+  if (ctx->choose_seed) {
+    logger_info("%s = %lu\n", key_seed_str, ctx->seed);
+  }
 }
 
 void INTERFLOP_MCAQUAD_API(CLI)(int argc, char **argv, void *context) {

@@ -6,9 +6,9 @@ libinterflop_mca_la_SOURCES = \
 libinterflop_mca_la_CFLAGS = \
     -DBACKEND_HEADER="interflop_mca" \
     -I@INTERFLOP_STDLIB_PATH@/include/ \
-    -fno-stack-protector
+    -fno-stack-protector -Og
 if WALL_CFLAGS
-libinterflop_mca_la_CFLAGS += -Wall -Wextra
+libinterflop_mca_la_CFLAGS += -Wall -Wextra -g
 endif
 if RNG_THREAD_SAFE
 libinterflop_mca_la_CFLAGS += -DRNG_THREAD_SAFE
